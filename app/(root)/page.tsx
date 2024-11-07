@@ -1,9 +1,5 @@
 "use client";
 import { Modal } from "@/components/ui/modal";
-
-
-
-
 export default function RootPage() {
     return (
       <div className="p-4">
