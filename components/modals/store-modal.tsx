@@ -16,6 +16,6 @@ export const StoreModal = () => {
         <div>Future create Store Form</div>ß
 
         </Modal>
-    )
 
-}
+
+)}
