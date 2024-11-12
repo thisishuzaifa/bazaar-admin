@@ -33,12 +33,12 @@ export const StoreModal = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(values),
-            });
-    
+                body: JSON.stringify(values)
+            })
+            const data = await response.json()
             if (response.ok) {
-                toast.success("Store created successfully");
-                storeModal.onClose();
+                window.location.assign(`/stores/${data.id}`)
+                toast.success("Store created successfully")
             } else {
                 throw new Error("Failed to create store");
             }
