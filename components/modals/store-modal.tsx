@@ -9,84 +9,109 @@ import { Form, FormItem, FormLabel, FormField, FormControl, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
-    name: z.string().min(3),
+    name: z.string().min(3, "Store name must be at least 3 characters long"),
 });
 
-export const StoreModal = () => {    
+type FormValues = z.infer<typeof formSchema>;
+
+export const StoreModal = () => {
+    const router = useRouter();
     const storeModal = useStoreModal();
     const [loading, setLoading] = useState(false);
-    const form = useForm<z.infer<typeof formSchema>>({
+
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
         },
     });
 
-    const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    const onClose = () => {
+        form.reset();
+        storeModal.onClose();
+    };
+
+    const handleSubmit = async (values: FormValues) => {
         try {
             setLoading(true);
+
             const response = await fetch("/api/stores", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(values)
-            })
-            const data = await response.json()
-            if (response.ok) {
-                window.location.assign(`/stores/${data.id}`)
-                toast.success("Store created successfully")
-            } else {
-                throw new Error("Failed to create store");
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to create store");
             }
+
+            // Use Next.js Router for client-side navigation
+            router.push(`/${data.id}`);
+            router.refresh(); // Refresh the current route to update any server components
+            
+            toast.success("Store created successfully");
+            onClose();
         } catch (error) {
-            console.log(error);
-            toast.error("Failed to create store");
+            console.error("Store creation error:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to create store");
         } finally {
             setLoading(false);
         }
     };
+
     return (
-    <Modal
-        title="Create Store"
-        description="Create a new store"
-        isOpen={storeModal.isOpen}
-        onClose={storeModal.onClose} 
-    >
-        <div>
-        <div className="space-y-4 py-2 pb-4">
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    <FormField 
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Name</FormLabel>
-                            <FormControl>
-                                <Input disabled={loading} placeholder="Your Store Name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <div className="pt-6 space-x-2 flex justify-end items-center w-full">
-                        <Button
-                         disabled={loading}
-                         variant="outline" onClick={storeModal.onClose}>Cancel</Button>
-                        <Button
-                         disabled={loading}
-                         type="submit">Continue</Button>
-                    </div>
-                </form>
-            </Form>
+        <Modal
+            title="Create Store"
+            description="Add a new store to manage products and inventory"
+            isOpen={storeModal.isOpen}
+            onClose={onClose}
+        >
+            <div className="space-y-4 py-2 pb-4">
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                        <FormField 
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Store Name</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            disabled={loading} 
+                                            placeholder="E.g. Fashion Boutique" 
+                                            {...field} 
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <div className="flex justify-end items-center gap-2">
+                            <Button
+                                type="button"
+                                disabled={loading}
+                                variant="outline" 
+                                onClick={onClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                            >
+                                {loading ? "Creating..." : "Create Store"}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
             </div>
-            </div>
-
         </Modal>
-
-
-)}
+    );
+};
