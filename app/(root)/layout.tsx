@@ -20,8 +20,6 @@ export default async function SetupLayout({ children }: { children: React.ReactN
     return (
         <>
             {children}
-
-            Here I am making changes 
         </>
     )
 }
